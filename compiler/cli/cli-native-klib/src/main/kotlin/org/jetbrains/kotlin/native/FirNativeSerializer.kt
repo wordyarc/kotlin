@@ -19,10 +19,10 @@ import org.jetbrains.kotlin.ir.KtDiagnosticReporterWithImplicitIrBasedContext
 import org.jetbrains.kotlin.konan.library.isExplicitlySpecifiedByUserInCLIArgument
 
 internal fun NativeFirstStagePhaseContext.firSerializerBase(
-        configuration: CompilerConfiguration,
-        firResult: AllModulesFrontendOutput,
-        fir2IrOutput: Fir2IrOutput?,
-        produceHeaderKlib: Boolean = false,
+    configuration: CompilerConfiguration,
+    firResult: AllModulesFrontendOutput,
+    fir2IrOutput: Fir2IrOutput?,
+    produceHeaderKlib: Boolean = false,
 ): SerializerOutput {
     val usedLibraries = fir2IrOutput?.let {
         config.loadedKlibs.all.filter { library ->
@@ -46,27 +46,27 @@ internal fun NativeFirstStagePhaseContext.firSerializerBase(
     val diagnosticReporter = configuration.diagnosticsCollector
     val irDiagnosticReporter = KtDiagnosticReporterWithImplicitIrBasedContext(diagnosticReporter, configuration.languageVersionSettings)
     return serializeModuleIntoKlib(
-            moduleName = irModuleFragment?.name?.asString() ?: firResult.outputs.last().session.moduleData.name.asString(),
-            irModuleFragment = irModuleFragment,
-            configuration = configuration,
-            diagnosticReporter = irDiagnosticReporter,
-            metadataSerializer = Fir2KlibMetadataSerializer(
-                configuration,
-                firResult.outputs,
-                fir2IrOutput?.fir2irActualizedResult,
-                produceHeaderKlib = produceHeaderKlib,
-            ),
-            cleanFiles = emptyList(),
-            dependencies = usedLibraries.orEmpty(),
-            createModuleSerializer = { irDiagnosticReporter ->
-                KonanIrModuleSerializer(
-                    settings = IrSerializationSettings(
-                        configuration = configuration,
-                        publicAbiOnly = produceHeaderKlib,
-                    ),
-                    diagnosticReporter = irDiagnosticReporter,
-                    irBuiltIns = fir2IrOutput?.fir2irActualizedResult?.irBuiltIns!!,
-                )
-            },
+        moduleName = irModuleFragment?.name?.asString() ?: firResult.outputs.last().session.moduleData.name.asString(),
+        irModuleFragment = irModuleFragment,
+        configuration = configuration,
+        diagnosticReporter = irDiagnosticReporter,
+        metadataSerializer = Fir2KlibMetadataSerializer(
+            configuration,
+            firResult.outputs,
+            fir2IrOutput?.fir2irActualizedResult,
+            produceHeaderKlib = produceHeaderKlib,
+        ),
+        cleanFiles = emptyList(),
+        dependencies = usedLibraries.orEmpty(),
+        createModuleSerializer = { irDiagnosticReporter ->
+            KonanIrModuleSerializer(
+                settings = IrSerializationSettings(
+                    configuration = configuration,
+                    publicAbiOnly = produceHeaderKlib,
+                ),
+                diagnosticReporter = irDiagnosticReporter,
+                irBuiltIns = fir2IrOutput?.fir2irActualizedResult?.irBuiltIns!!,
+            )
+        },
     )
 }
