@@ -1,0 +1,155 @@
+/*
+ * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
+
+package org.jetbrains.kotlin.backend.common.checkers
+
+import org.jetbrains.kotlin.backend.common.diagnostics.SerializationErrors
+import org.jetbrains.kotlin.ir.IrDiagnosticReporter
+import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationWithName
+import org.jetbrains.kotlin.ir.declarations.IrEnumEntry
+import org.jetbrains.kotlin.ir.declarations.IrFile
+import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
+import org.jetbrains.kotlin.ir.declarations.IrProperty
+import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.ir.declarations.IrTypeAlias
+import org.jetbrains.kotlin.ir.declarations.IrValueParameter
+import org.jetbrains.kotlin.ir.util.isLocal
+import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
+import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
+import org.jetbrains.kotlin.ir.visitors.acceptVoid
+
+/**
+ * Reports declaration names that compile fine, but break when the declaration is used from another module
+ * through a KLIB. Each rule covers only the declarations it actually breaks:
+ *
+ * - **A dot in the name of a top-level class, function or property**
+ *   ([SerializationErrors.DOT_IN_TOP_LEVEL_DECLARATION_NAME]).
+ *   [org.jetbrains.kotlin.ir.util.IdSignature.CommonSignature] joins name segments with dots, like `MyClass.<init>`,
+ *   and the linker finds the top-level declaration by the first segment, so the declaration can't be linked.
+ *   Dots elsewhere, e.g. in members, local declarations, enum entries, type aliases, type and value parameters,
+ *   don't break linkage.
+ *
+ * - **A `<` at the start of the name of a non-local function, property, type alias, value parameter or enum entry**
+ *   ([SerializationErrors.LEADING_LESS_THAN_IN_DECLARATION_NAME]).
+ *   Names read from KLIB metadata that start with `<` are treated as special names, like `<init>`,
+ *   so dependent modules can't resolve the declaration. A `<` anywhere else in the name is fine.
+ *
+ * - **A slash in the name of a non-local class**
+ *   ([SerializationErrors.SLASH_IN_DECLARATION_NAME]).
+ *   [org.jetbrains.kotlin.name.ClassId] uses the slash to separate the package from the class name,
+ *   so dependent modules can't resolve the class. This applies to top-level and nested classes alike.
+ *
+ * Local declarations are never reported: they don't reach KLIB metadata, so their names can't break linkage.
+ *
+ * The checker isn't needed for Native: FirNativeIdentifierChecker already forbids these characters
+ * in all declaration names.
+ */
+object KlibDeclarationNamesChecker {
+    private const val DOT_CHAR = '.'
+    private const val LESS_THAN_CHAR = '<'
+    private const val SLASH_CHAR = '/'
+
+    fun check(module: IrModuleFragment, diagnosticReporter: IrDiagnosticReporter) {
+        for (file in module.files) {
+            checkForTopLevelDots(file, diagnosticReporter)
+            file.acceptVoid(IllegalCharCheckerVisitor(diagnosticReporter, file))
+        }
+    }
+
+    fun checkForTopLevelDots(file: IrFile, diagnosticReporter: IrDiagnosticReporter) {
+        for (declaration in file.declarations) {
+            if (declaration !is IrClass && declaration !is IrSimpleFunction && declaration !is IrProperty) {
+                continue
+            }
+
+            val name = (declaration as IrDeclarationWithName).name
+
+            if (name.isSpecial) {
+                continue
+            }
+
+            val identifier = name.asString()
+
+            if (DOT_CHAR in identifier) {
+                diagnosticReporter
+                    .at(declaration, file)
+                    .report(SerializationErrors.DOT_IN_TOP_LEVEL_DECLARATION_NAME, identifier)
+            }
+        }
+    }
+
+    private class IllegalCharCheckerVisitor(
+        private val diagnosticReporter: IrDiagnosticReporter,
+        private val file: IrFile,
+    ) : IrVisitorVoid() {
+        override fun visitElement(element: IrElement) {
+            element.acceptChildrenVoid(this)
+        }
+
+        override fun visitClass(declaration: IrClass) {
+            checkSlash(declaration)
+            super.visitClass(declaration)
+        }
+
+        override fun visitEnumEntry(declaration: IrEnumEntry) {
+            checkLeadingLessThan(declaration)
+            super.visitEnumEntry(declaration)
+        }
+
+        override fun visitSimpleFunction(declaration: IrSimpleFunction) {
+            if (!declaration.isFakeOverride) {
+                checkLeadingLessThan(declaration)
+            }
+
+            super.visitSimpleFunction(declaration)
+        }
+
+        override fun visitProperty(declaration: IrProperty) {
+            if (!declaration.isFakeOverride) {
+                checkLeadingLessThan(declaration)
+            }
+
+            super.visitProperty(declaration)
+        }
+
+        override fun visitTypeAlias(declaration: IrTypeAlias) {
+            checkLeadingLessThan(declaration)
+            super.visitTypeAlias(declaration)
+        }
+
+        override fun visitValueParameter(declaration: IrValueParameter) {
+            checkLeadingLessThan(declaration)
+            super.visitValueParameter(declaration)
+        }
+
+        private fun checkLeadingLessThan(declaration: IrDeclarationWithName) {
+            val identifier = declaration.nonLocalNonSpecialIdentifier() ?: return
+
+            if (identifier.startsWith(LESS_THAN_CHAR)) {
+                diagnosticReporter
+                    .at(declaration, file)
+                    .report(SerializationErrors.LEADING_LESS_THAN_IN_DECLARATION_NAME, identifier)
+            }
+        }
+
+        private fun checkSlash(declaration: IrDeclarationWithName) {
+            val identifier = declaration.nonLocalNonSpecialIdentifier() ?: return
+
+            if (SLASH_CHAR in identifier) {
+                diagnosticReporter
+                    .at(declaration, file)
+                    .report(SerializationErrors.SLASH_IN_DECLARATION_NAME, identifier)
+            }
+        }
+
+        private fun IrDeclarationWithName.nonLocalNonSpecialIdentifier(): String? =
+            takeIf { !it.isLocal }
+                ?.name
+                ?.takeIf { !it.isSpecial }
+                ?.asString()
+    }
+}
