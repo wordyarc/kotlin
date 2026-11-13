@@ -51,6 +51,7 @@ class KlibNativeLoadedMetadataDumpHandler(testServices: TestServices) : Abstract
             isCommonSource = { false },
             fileBelongsToModule = { _, _ -> false },
             metadataCompilationMode = false,
+            incrementalDataProvider = null
         )
     }
 }

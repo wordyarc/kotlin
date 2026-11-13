@@ -94,11 +94,12 @@ fun <F> prepareNativeSessions(
     metadataCompilationMode: Boolean,
     isCommonSource: (F) -> Boolean,
     fileBelongsToModule: (F, String) -> Boolean,
+    incrementalDataProvider: IncrementalDataProvider?,
 ): List<SessionWithSources<F>> {
     return prepareKlibSessions(
         if (metadataCompilationMode) FirNativeSessionFactory.ForMetadata else FirNativeSessionFactory,
         NativePlatforms.unspecifiedNativePlatform, files, configuration, rootModuleName, resolvedLibraries,
-        libraryList, extensionRegistrars, isCommonSource, fileBelongsToModule, metadataCompilationMode, incrementalDataProvider = null
+        libraryList, extensionRegistrars, isCommonSource, fileBelongsToModule, metadataCompilationMode, incrementalDataProvider
     )
 }
 

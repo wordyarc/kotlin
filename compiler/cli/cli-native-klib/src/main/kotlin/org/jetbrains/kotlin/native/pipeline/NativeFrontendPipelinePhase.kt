@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.cli.jvm.compiler.*
 import org.jetbrains.kotlin.cli.pipeline.*
 import org.jetbrains.kotlin.compiler.plugin.getCompilerExtensions
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.incrementalDataProvider
 import org.jetbrains.kotlin.config.parserMode
 import org.jetbrains.kotlin.config.perfManager
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
@@ -89,6 +90,7 @@ object NativeFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact
             metadataCompilationMode = config.metadataKlib,
             isCommonSource = isCommonSource,
             fileBelongsToModule = fileBelongsToModule,
+            incrementalDataProvider = configuration.incrementalDataProvider,
         )
 
         val outputs = sessionsWithSources.map { (val session, val sources = files) ->
