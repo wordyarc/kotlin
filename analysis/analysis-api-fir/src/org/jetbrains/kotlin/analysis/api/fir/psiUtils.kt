@@ -113,6 +113,10 @@ fun FirBasedSymbol<*>.findPsi(scope: GlobalSearchScope): PsiElement? {
 internal val KtDestructuringDeclarationEntry.entryName: Name
     get() = if (isSingleUnderscore) SpecialNames.UNDERSCORE_FOR_UNUSED_VAR else nameAsSafeName
 
+/**
+ * The name that FIR gives to this parameter, or [SpecialNames.NO_NAME_PROVIDED] for a context parameter without a name, which is
+ * a legacy context receiver that has a name only in FIR.
+ */
 internal val KtParameter.parameterName: Name
     get() = when {
         destructuringDeclaration != null -> SpecialNames.DESTRUCT
