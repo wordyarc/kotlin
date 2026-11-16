@@ -75,7 +75,7 @@ fun annotatedContextReceiverSyntax() {}
 context(<!CONTEXT_PARAMETER_WITHOUT_NAME!>String<!>, _: Int)
 fun mixedSyntax() {}
 
-context(<!SYNTAX!><!>: String)
+context(<!CONTEXT_PARAMETER_WITHOUT_NAME!><!SYNTAX!><!>: String<!>)
 fun missingName() {}
 
 <!UNSUPPORTED!>context(<!CONTEXT_PARAMETER_WITHOUT_NAME!>String<!>)<!>
