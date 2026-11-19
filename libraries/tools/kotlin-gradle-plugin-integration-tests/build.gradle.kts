@@ -144,6 +144,7 @@ dependencies {
 
     testImplementation(project(":compiler:build-tools:kotlin-build-statistics"))
     testImplementation(project(":compiler:build-tools:kotlin-build-tools-api"))
+    testImplementation(project(":kotlin-ic-event-report"))
     testRuntimeOnly(project(":compiler:build-tools:kotlin-build-tools-impl"))
     testImplementation(project(":kotlin-compiler-embeddable"))
     testRuntimeOnly(libs.org.tukaani.xz)
