@@ -322,7 +322,7 @@ object StandaloneProjectFactory {
         )
         project.registerService(
             KotlinJavaModuleAnnotationsProvider::class.java,
-            KotlinStandaloneJavaModuleAnnotationsProvider(delegateJavaModuleResolver),
+            KotlinStandaloneJavaModuleAnnotationsProvider(project, delegateJavaModuleResolver),
         )
     }
 
