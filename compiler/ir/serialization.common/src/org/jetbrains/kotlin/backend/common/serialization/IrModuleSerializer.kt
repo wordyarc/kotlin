@@ -23,8 +23,10 @@ abstract class IrModuleSerializer<Serializer : IrFileSerializer>(
     protected val settings: IrSerializationSettings,
     protected val diagnosticReporter: IrDiagnosticReporter,
 ) {
-    private val signaturesOfPublicTopLevelDeclarations = hashSetOf<IdSignature.CommonSignature>()
-    private val signaturesOfTopLevelReferencedDeclarations = hashSetOf<IdSignature.CommonSignature>()
+    val signaturesOfPublicTopLevelDeclarations: Map<IrFile, Set<IdSignature>>
+        field = hashMapOf()
+    val signaturesOfTopLevelReferencedDeclarations: Map<IrFile, Set<IdSignature>>
+        field = hashMapOf()
 
     abstract fun createFileSerializer(settings: IrSerializationSettings = this.settings): Serializer
 
@@ -43,8 +45,8 @@ abstract class IrModuleSerializer<Serializer : IrFileSerializer>(
         val serializedFile = fileSerializer.serializeIrFile(file)
 
         if (settings.collectDataForSignatureIndex) {
-            signaturesOfPublicTopLevelDeclarations += fileSerializer.signaturesOfPublicTopLevelDeclarations
-            signaturesOfTopLevelReferencedDeclarations += fileSerializer.signaturesOfTopLevelReferencedDeclarations
+            signaturesOfPublicTopLevelDeclarations += file to fileSerializer.signaturesOfPublicTopLevelDeclarations
+            signaturesOfTopLevelReferencedDeclarations += file to fileSerializer.signaturesOfTopLevelReferencedDeclarations
         }
 
         return serializedFile
@@ -65,10 +67,13 @@ abstract class IrModuleSerializer<Serializer : IrFileSerializer>(
             globalDeclarationTable.clashDetector.reportErrorsTo(diagnosticReporter)
         }
 
+        fun HashMap<IrFile, Set<IdSignature>>.getFlatValues(): HashSet<IdSignature> =
+            values.flatMapTo(hashSetOf()) { it }
+
         val serializedSignatureIndex = runIf(settings.collectDataForSignatureIndex) {
             KlibSignatureIndexComponentWriterImpl(
-                exportedTopLevelSignatures = signaturesOfPublicTopLevelDeclarations,
-                importedTopLevelSignatures = signaturesOfTopLevelReferencedDeclarations - signaturesOfPublicTopLevelDeclarations,
+                exportedTopLevelSignatures = signaturesOfPublicTopLevelDeclarations.getFlatValues(),
+                importedTopLevelSignatures = signaturesOfTopLevelReferencedDeclarations.getFlatValues() - signaturesOfPublicTopLevelDeclarations.getFlatValues(),
             ).serializedSignatureIndex
         }
 

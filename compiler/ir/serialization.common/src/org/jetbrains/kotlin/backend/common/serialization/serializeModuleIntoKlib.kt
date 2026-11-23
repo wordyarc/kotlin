@@ -121,10 +121,9 @@ fun <SourceFile> serializeModuleIntoKlib(
     metadataSerializer: KlibSingleFileMetadataSerializer<SourceFile>,
     processCompiledFileData: ((File, KotlinFileSerializedData, List<CallableId>) -> Unit)? = null,
 ): SerializerOutput {
+    val moduleSerializer = createModuleSerializer(diagnosticReporter)
     val serializedIrFromDirtySources = irModuleFragment?.let {
-        createModuleSerializer(
-            diagnosticReporter,
-        ).serializedIrModule(it)
+        moduleSerializer.serializedIrModule(it)
     }
 
     val serializedDirtyFiles = serializedIrFromDirtySources?.files?.toList()
@@ -144,6 +143,16 @@ fun <SourceFile> serializeModuleIntoKlib(
                 }
             }
 
+            val exportedSignatures = moduleSerializer.signaturesOfPublicTopLevelDeclarations.entries
+                .firstOrNull { it.key.fileEntry.name == binaryFile?.path }?.value ?: emptySet()
+            val referencedSignatures = moduleSerializer.signaturesOfTopLevelReferencedDeclarations.entries
+                .firstOrNull { it.key.fileEntry.name == binaryFile?.path }?.value ?: emptySet()
+            val imported = referencedSignatures - exportedSignatures
+            val serializedSignatureIndex = serializeSignatures(
+                exportedSignatures = exportedSignatures,
+                importedSignatures = imported,
+            ).writeIntoMemory()
+
             val inlineBinaryFile = serializedDirtyInlineFiles?.firstOrNull { it.path == binaryFile?.path && it.fqName == binaryFile.fqName }
 
             val protoBuf = metadataSerializer.serializeSingleFileMetadata(sourceFile)
@@ -151,7 +160,7 @@ fun <SourceFile> serializeModuleIntoKlib(
             val compiledKotlinFile = if (binaryFile == null)
                 KotlinFileSerializedData(metadata, ktSourceFile?.path, packageFqName.asString())
             else
-                KotlinFileSerializedData(metadata, binaryFile, inlineBinaryFile, signatureIndex = null) // TODO set proper value
+                KotlinFileSerializedData(metadata, binaryFile, inlineBinaryFile, serializedSignatureIndex)
 
             if (processCompiledFileData != null) {
                 val callableIds = callableIdsOfInlineFunByFile.entries
