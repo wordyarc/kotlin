@@ -35,6 +35,7 @@ class IncrementalKlibCache(
         private const val IR_TRANSLATION_RESULT_MAP = "ir-translation-result"
         private const val INLINE_FUNCTIONS = "inline-functions"
         private const val INLINE_FUNCTIONS_REPRESENTATION = "inline-functions-representation"
+        private const val SIGNATURE_INDEX = "signature-index"
 
         // KMP only
         private const val COMMON_METADATA_MAP = "metadata"
@@ -49,6 +50,7 @@ class IncrementalKlibCache(
     private val irTranslationResults = registerMap(IrTranslationResultMap(IR_TRANSLATION_RESULT_MAP.storageFile, icContext))
     private val irInlineTranslationResults = registerMap(IrTranslationResultMap(INLINE_FUNCTIONS.storageFile, icContext))
     private val irInlineFunctionRepresentationMap = registerMap(IrInlineIdsMap(INLINE_FUNCTIONS_REPRESENTATION.storageFile, icContext))
+    private val signatureIndex = registerMap(SignatureIndexMap(SIGNATURE_INDEX.storageFile, icContext))
     private val dirtySources = hashSetOf<File>()
 
     // KMP only
@@ -126,6 +128,10 @@ class IncrementalKlibCache(
             val newIrInlineFunctionRepresentations = compareInlineFunctions(srcFile, incrementalResults, changesCollector)
             irInlineFunctionRepresentationMap.put(srcFile, newIrInlineFunctionRepresentations)
         }
+
+        for ([srcFile, newData] in incrementalResults.signatureIndexCache) {
+            signatureIndex.put(srcFile, newData)
+        }
     }
 
     private fun compareInlineFunctions(
@@ -157,6 +163,7 @@ class IncrementalKlibCache(
             irTranslationResults.remove(it)
             irInlineTranslationResults.remove(it)
             irInlineFunctionRepresentationMap.remove(it)
+            signatureIndex.remove(it)
         }
         removeAllFromClassStorage(dirtyOutputClassesMap.getDirtyOutputClasses(), changesCollector)
         dirtySources.clear()
@@ -202,6 +209,15 @@ class IncrementalKlibCache(
 
                 if (file !in dirtySources) {
                     put(file, irInlineTranslationResults[file]!!)
+                }
+            }
+        }
+
+    fun nonDirtySignatures(): Map<File, SerializedSignatureIndexForIC> =
+        buildMap {
+            for (file in signatureIndex.keys) {
+                if (file !in dirtySources) {
+                    put(file, signatureIndex[file]!!)
                 }
             }
         }
@@ -393,3 +409,36 @@ private object IrInlineFunctionRepresentationExternalizer : DataExternalizer<IrI
     }
 }
 
+private class SignatureIndexMap(
+    storageFile: File,
+    icContext: IncrementalCompilationContext,
+) : AbstractBasicMap<File, SerializedSignatureIndexForIC>(
+    storageFile,
+    icContext.fileDescriptorForSourceFiles,
+    SerializedSignatureIndexExternalizer,
+    icContext
+) {
+
+    @TestOnly
+    override fun dumpValue(value: SerializedSignatureIndexForIC): String {
+        return "SerializedSignatureIndex: ${value.signatureIndex.md5()}"
+    }
+
+    @Synchronized
+    fun put(
+        sourceFile: File,
+        serializedSignatureIndex: SerializedSignatureIndexForIC,
+    ) {
+        this[sourceFile] = serializedSignatureIndex
+    }
+}
+
+private object SerializedSignatureIndexExternalizer : DataExternalizer<SerializedSignatureIndexForIC> {
+    override fun save(output: DataOutput, value: SerializedSignatureIndexForIC) {
+        ByteArrayExternalizer.save(output, value.signatureIndex)
+    }
+
+    override fun read(input: DataInput): SerializedSignatureIndexForIC {
+        return SerializedSignatureIndexForIC(ByteArrayExternalizer.read(input))
+    }
+}
