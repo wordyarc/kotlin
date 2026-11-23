@@ -48,13 +48,11 @@ internal class KotlinImportModelProducer(private val project: Project) {
     fun serveRequest(modelId: String?, parameters: ByteArray?): ByteArray = try {
         when (modelId) {
             null -> errorResult(Error.Type.ERROR_TYPE_UNKNOWN_MODEL_ID, "Kotlin import model ID is required")
-            KotlinImportModelIds.BASE -> serveParameterless(modelId, parameters) {
-                KotlinImportModelSerialization.modelResult(baseInformation())
-            }
+            KotlinImportModelIds.BASE -> checkRequestIsParameterless(modelId, parameters)
+                ?: KotlinImportModelSerialization.modelResult(baseInformation())
             KotlinImportModelIds.PROJECT_INFORMATION -> if (servesJvmProjectInformation()) {
-                serveParameterless(modelId, parameters) {
-                    KotlinImportModelSerialization.modelResult(projectInformation())
-                }
+                checkRequestIsParameterless(modelId, parameters)
+                    ?: KotlinImportModelSerialization.modelResult(projectInformation())
             } else {
                 errorResult(
                     Error.Type.ERROR_TYPE_UNSUPPORTED_MODEL_ID,
@@ -111,14 +109,11 @@ internal class KotlinImportModelProducer(private val project: Project) {
 
     private fun servesJvmProjectInformation(): Boolean = project.kotlinExtensionOrNull is KotlinJvmProjectExtension
 
-    private fun serveParameterless(
-        modelId: String,
-        parameters: ByteArray?,
-        produce: () -> ByteArray,
-    ): ByteArray = if (parameters == null) produce() else errorResult(
-        Error.Type.ERROR_TYPE_UNSUPPORTED_MODEL_PARAMS,
-        "Kotlin import model '$modelId' does not accept parameters",
-    )
+    private fun checkRequestIsParameterless(modelId: String, parameters: ByteArray?): ByteArray? =
+        if (parameters == null) null else errorResult(
+            Error.Type.ERROR_TYPE_UNSUPPORTED_MODEL_PARAMS,
+            "Kotlin import model '$modelId' does not accept parameters",
+        )
 
     /**
      * One request the producer serves: the model id and, for parameterized models, its serialized parameters.
