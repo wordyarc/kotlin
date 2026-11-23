@@ -118,7 +118,6 @@ val distCompilerPluginProjects = listOf(
     ":kotlin-allopen-compiler-plugin",
     ":kotlin-atomicfu-compiler-plugin",
     ":plugins:parcelize:parcelize-compiler",
-    ":plugins:parcelize:parcelize-runtime",
     ":kotlin-noarg-compiler-plugin",
     ":kotlin-power-assert-compiler-plugin",
     ":kotlin-sam-with-receiver-compiler-plugin",
@@ -177,6 +176,7 @@ dependencies {
     distCompilerPluginProjects.forEach {
         compilerPlugins(project(it)) { isTransitive = false }
     }
+    compilerPlugins(project(":plugins:parcelize:parcelize-runtime", configuration = "androidRuntimeElements")) { isTransitive = false }
     distCompilerPluginProjectsCompat.forEach {
         compilerPluginsCompat(
             project(
@@ -438,10 +438,10 @@ val distKotlinc = distTask<Sync>("distKotlinc") {
             rename {
                 // We want to migrate all compiler plugin in 'dist' to have 'kotlin-' prefix
                 // 'kotlin-serialization-compiler-plugin' is a new jar and should have such prefix from the start
-                if (!it.startsWith("kotlin-serialization")) {
-                    it.removePrefix("kotlin-")
-                } else {
-                    it
+                when {
+                    it.startsWith("parcelize-runtime-android") -> it.replaceFirst("parcelize-runtime-android", "parcelize-runtime")
+                    !it.startsWith("kotlin-serialization") -> it.removePrefix("kotlin-")
+                    else -> it
                 }
             }
         }
