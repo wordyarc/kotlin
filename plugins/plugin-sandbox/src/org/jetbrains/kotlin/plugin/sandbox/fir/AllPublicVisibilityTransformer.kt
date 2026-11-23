@@ -10,9 +10,7 @@ import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.checkers.extra.explicitVisibility
 import org.jetbrains.kotlin.fir.copyWithNewDefaults
-import org.jetbrains.kotlin.fir.declarations.FirClass
-import org.jetbrains.kotlin.fir.declarations.FirDeclaration
-import org.jetbrains.kotlin.fir.declarations.FirDeclarationStatus
+import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression
 import org.jetbrains.kotlin.fir.expressions.arguments
@@ -20,7 +18,6 @@ import org.jetbrains.kotlin.fir.extensions.FirDeclarationPredicateRegistrar
 import org.jetbrains.kotlin.fir.extensions.FirStatusTransformerExtension
 import org.jetbrains.kotlin.fir.extensions.predicate.DeclarationPredicate
 import org.jetbrains.kotlin.fir.extensions.predicateBasedProvider
-import org.jetbrains.kotlin.fir.references.FirNamedReference
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.types.classLikeLookupTagIfAny
@@ -42,7 +39,7 @@ class AllPublicVisibilityTransformer(session: FirSession) : FirStatusTransformer
         private val PREDICATE = DeclarationPredicate.create { annotatedOrUnder(AllPublicClassId.asSingleFqName()) }
     }
 
-    override fun transformStatus(status: FirDeclarationStatus, declaration: FirDeclaration): FirDeclarationStatus {
+    private fun transformStatusImpl(status: FirDeclarationStatus, declaration: FirDeclaration): FirDeclarationStatus {
         val owners = session.predicateBasedProvider.getOwnersOfDeclaration(declaration) ?: emptyList()
         val visibility = findVisibility(declaration, owners) ?: return status
 
@@ -50,6 +47,20 @@ class AllPublicVisibilityTransformer(session: FirSession) : FirStatusTransformer
             null -> status.copyWithNewDefaults(visibility = visibility, defaultVisibility = visibility)
             else -> status.copyWithNewDefaults(defaultVisibility = visibility)
         }
+    }
+
+    override fun transformCallableStatus(
+        status: FirCallableDeclarationStatus,
+        declaration: FirCallableDeclaration,
+    ): FirCallableDeclarationStatus {
+        return transformStatusImpl(status, declaration) as FirCallableDeclarationStatus
+    }
+
+    override fun transformClassLikeStatus(
+        status: FirClassLikeDeclarationStatus,
+        declaration: FirClassLikeDeclaration,
+    ): FirClassLikeDeclarationStatus {
+        return transformStatusImpl(status, declaration) as FirClassLikeDeclarationStatus
     }
 
     private fun findVisibility(declaration: FirDeclaration, owners: List<FirBasedSymbol<*>>): Visibility? {

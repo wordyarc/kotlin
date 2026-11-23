@@ -45,6 +45,8 @@ class MissingOverrideStatusTransformer(session: FirSession) : FirStatusTransform
         }
     }
 
+    // Keep the old function usage to test compatibility during deprecation period
+    @Suppress("OVERRIDE_DEPRECATION")
     override fun transformStatus(
         status: FirDeclarationStatus,
         function: FirNamedFunction,

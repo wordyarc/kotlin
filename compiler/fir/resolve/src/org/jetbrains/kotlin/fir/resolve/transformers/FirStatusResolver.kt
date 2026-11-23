@@ -42,12 +42,25 @@ class FirStatusResolver(
 
     private val extensionStatusTransformers = session.extensionService.statusTransformerExtensions
 
-    private inline fun FirMemberDeclaration.applyExtensionTransformers(
-        operation: FirStatusTransformerExtension.(FirDeclarationStatus) -> FirDeclarationStatus
+    private inline fun FirCallableDeclaration.applyExtensionTransformers(
+        operation: FirStatusTransformerExtension.(FirCallableDeclarationStatus) -> FirCallableDeclarationStatus
     ): FirDeclarationStatus {
-        if (extensionStatusTransformers.isEmpty()) return status
+        return applyExtensionTransformers(status, operation)
+    }
+
+    private inline fun FirClassLikeDeclaration.applyExtensionTransformers(
+        operation: FirStatusTransformerExtension.(FirClassLikeDeclarationStatus) -> FirClassLikeDeclarationStatus
+    ): FirDeclarationStatus {
+        return applyExtensionTransformers(status, operation)
+    }
+
+    private inline fun <S : FirDeclarationStatus> FirDeclaration.applyExtensionTransformers(
+        originalStatus: S,
+        operation: FirStatusTransformerExtension.(S) -> S
+    ): S {
+        if (extensionStatusTransformers.isEmpty()) return originalStatus
         val declaration = this
-        return extensionStatusTransformers.fold(status) { acc, it ->
+        return extensionStatusTransformers.fold(originalStatus) { acc, it ->
             if (it.needTransformStatus(declaration)) {
                 it.operation(acc)
             } else {

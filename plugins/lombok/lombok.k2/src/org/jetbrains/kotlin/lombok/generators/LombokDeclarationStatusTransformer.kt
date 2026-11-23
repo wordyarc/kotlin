@@ -31,13 +31,12 @@ class LombokDeclarationStatusTransformer(session: FirSession) : FirStatusTransfo
     }
 
     override fun transformStatus(
-        status: FirDeclarationStatus,
+        status: FirCallableDeclarationStatus,
         field: FirField,
         containingClass: FirClassLikeSymbol<*>?,
         isLocal: Boolean,
-    ): FirDeclarationStatus {
+    ): FirCallableDeclarationStatus {
         if (containingClass == null) return status
-        require(status is FirResolvedCallableDeclarationStatus)
         val lombokService = session.lombokService
         val fieldDefaults = lombokService.getFieldDefaults(containingClass)
         val visibility = when {
@@ -53,12 +52,11 @@ class LombokDeclarationStatusTransformer(session: FirSession) : FirStatusTransfo
     }
 
     override fun transformStatus(
-        status: FirDeclarationStatus,
+        status: FirClassLikeDeclarationStatus,
         regularClass: FirRegularClass,
         containingClass: FirClassLikeSymbol<*>?,
         isLocal: Boolean,
-    ): FirDeclarationStatus {
-        require(status is FirResolvedClassLikeDeclarationStatus)
+    ): FirClassLikeDeclarationStatus {
         return if (session.lombokService.getValue(regularClass.symbol) != null &&
             status.modality != Modality.FINAL
         ) {
@@ -69,13 +67,12 @@ class LombokDeclarationStatusTransformer(session: FirSession) : FirStatusTransfo
     }
 
     override fun transformStatus(
-        status: FirDeclarationStatus,
+        status: FirCallableDeclarationStatus,
         constructor: FirConstructor,
         containingClass: FirClassLikeSymbol<*>?,
         isLocal: Boolean,
-    ): FirDeclarationStatus {
+    ): FirCallableDeclarationStatus {
         if (containingClass == null) return status
-        require(status is FirResolvedCallableDeclarationStatus)
 
         val isHidden = if (constructor is FirJavaConstructor) {
             when {
