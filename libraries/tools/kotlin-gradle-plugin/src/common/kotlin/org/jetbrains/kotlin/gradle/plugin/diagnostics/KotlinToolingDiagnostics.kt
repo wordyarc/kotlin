@@ -2620,6 +2620,9 @@ internal object KotlinToolingDiagnostics {
                             "for 'kotlin-build-tools-impl'. By default, it is Kotlin Gradle Plugin version '$pluginVersion'."
                 }
                 .solution { "Use a Kotlin compiler version that supports $platform compilation." }
+                .documentationLink(URI("https://kotl.in/build-tools-api-compiler-versions")) { url ->
+                    "Learn more about using a different Kotlin compiler version: $url"
+                }
         }
     }
 
