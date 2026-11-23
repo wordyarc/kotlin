@@ -289,18 +289,19 @@ class DisabledNativeCacheTest {
 
         assertTrue(isDisabled("2.4.0", "2.4.0"))
         assertTrue(isDisabled("2.4.0", "2.4.1"))
-        assertTrue(isDisabled("2.4.0", "2.4.2"))
-        assertFalse(isDisabled("2.4.0", "2.4.10"))
+        assertTrue(isDisabled("2.4.0", "2.4.10"))
+        assertTrue(isDisabled("2.4.0", "2.4.11"))
+        assertTrue(isDisabled("2.4.0", "2.4.12"))
+        assertTrue(isDisabled("2.4.0", "2.4.12-RC"))
         assertFalse(isDisabled("2.4.0", "2.4.20"))
+        assertFalse(isDisabled("2.4.0", "2.4.21"))
         assertFalse(isDisabled("2.4.0", "2.5.0"))
-
-        assertTrue(isDisabled("2.4.10", "2.4.11"))
-        assertFalse(isDisabled("2.4.10", "2.4.20"))
 
         assertTrue(isDisabled("2.4.20", "2.4.20"))
         assertTrue(isDisabled("2.4.20", "2.4.21"))
         assertTrue(isDisabled("2.4.20", "2.4.22-RC"))
         assertFalse(isDisabled("2.4.20", "2.4.10"))
+        assertFalse(isDisabled("2.4.20", "2.4.12"))
         assertFalse(isDisabled("2.4.20", "2.4.255-SNAPSHOT"))
         assertFalse(isDisabled("2.4.20", "3.4.20"))
     }

@@ -23,13 +23,13 @@ internal fun DisableCacheInKotlinVersion.toKotlinVersion() = KotlinToolingVersio
 /**
  * Checks whether this entry disables the cache for [nativeVersion].
  *
- * [DisableCacheInKotlinVersion] has no constants for bug-fix releases, so a constant also covers the bug-fix releases
- * of its version: `2_4_0` covers 2.4.1 and 2.4.2, and `2_4_20` covers 2.4.21. Kotlin releases are 10 patch numbers apart
- * (2.4.0, 2.4.10, 2.4.20), so `2_4_0` covers neither 2.4.10 nor 2.4.20.
+ * [DisableCacheInKotlinVersion] has constants only for the `X.Y.0` and `X.Y.20` releases, so a constant also covers
+ * the bug-fix releases of its version: `2_4_0` covers 2.4.10, 2.4.11 and 2.4.12, and `2_4_20` covers 2.4.21 and 2.4.22.
+ * A constant covers the patch numbers up to the next release, so `2_4_0` does not cover 2.4.20.
  */
 internal fun DisableNativeCacheSettings.appliesTo(nativeVersion: KotlinToolingVersion): Boolean =
     version.major == nativeVersion.major &&
             version.minor == nativeVersion.minor &&
             version.patch / RELEASE_PATCH_STEP == nativeVersion.patch / RELEASE_PATCH_STEP
 
-private const val RELEASE_PATCH_STEP = 10
+private const val RELEASE_PATCH_STEP = 20
