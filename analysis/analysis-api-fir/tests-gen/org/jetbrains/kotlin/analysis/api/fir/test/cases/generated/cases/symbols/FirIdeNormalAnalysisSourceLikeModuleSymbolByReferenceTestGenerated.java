@@ -417,6 +417,12 @@ public class FirIdeNormalAnalysisSourceLikeModuleSymbolByReferenceTestGenerated 
   }
 
   @Test
+  @TestMetadata("javaOverriddenSyntheticPropertyWithInheritedAccessors.kt")
+  public void testJavaOverriddenSyntheticPropertyWithInheritedAccessors() {
+    run("javaOverriddenSyntheticPropertyWithInheritedAccessors.kt");
+  }
+
+  @Test
   @TestMetadata("javaStaticField.kt")
   public void testJavaStaticField() {
     run("javaStaticField.kt");
@@ -432,6 +438,30 @@ public class FirIdeNormalAnalysisSourceLikeModuleSymbolByReferenceTestGenerated 
   @TestMetadata("javaSyntheticAccessor.kt")
   public void testJavaSyntheticAccessor() {
     run("javaSyntheticAccessor.kt");
+  }
+
+  @Test
+  @TestMetadata("javaSyntheticPropertyWithAccessorsFromUnrelatedInterfaces.kt")
+  public void testJavaSyntheticPropertyWithAccessorsFromUnrelatedInterfaces() {
+    run("javaSyntheticPropertyWithAccessorsFromUnrelatedInterfaces.kt");
+  }
+
+  @Test
+  @TestMetadata("javaSyntheticPropertyWithGetterOverride.kt")
+  public void testJavaSyntheticPropertyWithGetterOverride() {
+    run("javaSyntheticPropertyWithGetterOverride.kt");
+  }
+
+  @Test
+  @TestMetadata("javaSyntheticPropertyWithSetterInImplementingClass.kt")
+  public void testJavaSyntheticPropertyWithSetterInImplementingClass() {
+    run("javaSyntheticPropertyWithSetterInImplementingClass.kt");
+  }
+
+  @Test
+  @TestMetadata("javaSyntheticPropertyWithSetterOverride.kt")
+  public void testJavaSyntheticPropertyWithSetterOverride() {
+    run("javaSyntheticPropertyWithSetterOverride.kt");
   }
 
   @Test
