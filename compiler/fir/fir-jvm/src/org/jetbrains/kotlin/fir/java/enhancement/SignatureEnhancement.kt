@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.caches.FirCache
 import org.jetbrains.kotlin.fir.caches.FirCachesFactory
@@ -20,16 +19,12 @@ import org.jetbrains.kotlin.fir.caches.createCache
 import org.jetbrains.kotlin.fir.caches.firCachesFactory
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.*
-import org.jetbrains.kotlin.fir.declarations.impl.FirDeclarationStatusImpl
+import org.jetbrains.kotlin.fir.declarations.impl.FirCallableDeclarationStatusImpl
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
 import org.jetbrains.kotlin.fir.declarations.synthetic.buildSyntheticProperty
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
-import org.jetbrains.kotlin.fir.expressions.ExplicitTypeArgumentIfMadeFlexibleSyntheticallyTypeAttribute
-import org.jetbrains.kotlin.fir.expressions.FirAnnotation
-import org.jetbrains.kotlin.fir.expressions.FirErrorExpression
-import org.jetbrains.kotlin.fir.expressions.FirLiteralExpression
-import org.jetbrains.kotlin.fir.expressions.unexpandedClassId
+import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.extensions.DeclarationGenerationContext
 import org.jetbrains.kotlin.fir.extensions.declarationGenerators
 import org.jetbrains.kotlin.fir.extensions.extensionService
@@ -49,13 +44,11 @@ import org.jetbrains.kotlin.fir.scopes.CallableCopyTypeCalculator
 import org.jetbrains.kotlin.fir.scopes.DeferredCallableCopyReturnType
 import org.jetbrains.kotlin.fir.scopes.deferredCallableCopyReturnType
 import org.jetbrains.kotlin.fir.scopes.jvm.computeJvmDescriptor
-import org.jetbrains.kotlin.fir.types.ConeTypeParameterLookupTag
 import org.jetbrains.kotlin.fir.symbols.asCone
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.buildErrorTypeRef
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
-import org.jetbrains.kotlin.fir.types.ConeClassLikeTypeImpl
 import org.jetbrains.kotlin.fir.types.impl.FirImplicitTypeRefImplWithoutSource
 import org.jetbrains.kotlin.fir.types.jvm.FirJavaTypeRef
 import org.jetbrains.kotlin.fir.utils.exceptions.withFirEntry
@@ -80,7 +73,7 @@ import org.jetbrains.kotlin.util.PrivateForInline
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.exceptions.checkWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
-import java.util.EnumMap
+import java.util.*
 
 class FirSignatureEnhancement(
     private val owner: FirJavaClass,
@@ -372,9 +365,8 @@ class FirSignatureEnhancement(
                 val symbol = FirConstructorSymbol(methodId).also { functionSymbol = it }
                 val builder: FirAbstractConstructorBuilder = if (firMethod.isPrimary) {
                     FirPrimaryConstructorBuilder().apply {
-                        val resolvedStatus = firMethod.status as? FirResolvedDeclarationStatus
-                        val baseStatus = resolvedStatus ?: FirDeclarationStatusImpl(firMethod.visibility, Modality.FINAL).apply {
-                            isInner = firMethod.isInner
+                        val resolvedStatus = firMethod.status as? FirResolvedCallableDeclarationStatus
+                        val baseStatus = resolvedStatus ?: FirCallableDeclarationStatusImpl(firMethod.visibility, FINAL).apply {
                             // Java annotation class constructors have stable names, copy flag.
                             hasStableParameterNames = firMethod.hasStableParameterNames
                         }
@@ -517,11 +509,11 @@ class FirSignatureEnhancement(
     }
 
     private fun enhanceStatus(
-        original: FirDeclarationStatus,
+        original: FirCallableDeclarationStatus,
         declaration: FirCallableDeclaration,
         predefinedEnhancementInfo: PredefinedFunctionEnhancementInfo?,
         overriddenMembers: List<FirCallableDeclaration>,
-    ): FirDeclarationStatus {
+    ): FirCallableDeclarationStatus {
         if (original.returnValueStatus != ReturnValueStatus.Unspecified) return original
         predefinedEnhancementInfo?.returnValueStatus?.takeIf { it != ReturnValueStatus.Unspecified }?.let { newRvStatus ->
             return original.copy(returnValueStatus = newRvStatus)
