@@ -6,8 +6,8 @@
 package org.jetbrains.kotlin.buildtools.api
 
 /**
- * Thrown by [KotlinToolchains.getToolchain] when the loaded Build Tools API implementation does not provide the requested toolchain,
- * usually because the Kotlin compiler in use is older than the toolchain. Retrying with the same implementation fails the same way.
+ * Thrown when the loaded Build Tools API implementation does not provide the requested toolchain, usually because the Kotlin compiler
+ * in use is older than the toolchain. Retrying with the same implementation fails the same way.
  *
  * Implementations before Kotlin 2.5.20 throw a plain [IllegalStateException] in this case, so this exception extends it.
  *
