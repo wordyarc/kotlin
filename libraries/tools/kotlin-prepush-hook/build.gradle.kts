@@ -20,12 +20,15 @@ fun Project.getGitDirectory(): File {
 
     return if (dotGitFile.isFile) {
         val workTreeLink = dotGitFile.readLines().single { it.startsWith("gitdir: ") }
-        val mainRepoPath = workTreeLink
-            .substringAfter("gitdir: ", "")
-            .substringBefore("/.git/worktrees/", "")
-            .also { require(it.isNotEmpty()) }
+        val gitDirPath = workTreeLink.substringAfter("gitdir: ")
+        val gitDirectory = File(gitDirPath).takeIf { it.isAbsolute } ?: File(projectDir, gitDirPath)
 
-        File(mainRepoPath, ".git").also { require(it.isDirectory) }
+        val commonDirFile = File(gitDirectory, "commondir")
+        if (commonDirFile.isFile) {
+            File(gitDirectory, commonDirFile.readLines().first()).also { require(it.isDirectory) }
+        } else {
+            gitDirectory
+        }
     } else {
         dotGitFile
     }
