@@ -15,8 +15,11 @@ import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.fir.containingClassLookupTag
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
 import org.jetbrains.kotlin.fir.declarations.utils.*
+import org.jetbrains.kotlin.fir.resolve.isSubclassOf
+import org.jetbrains.kotlin.fir.resolve.toClassSymbol
 import org.jetbrains.kotlin.fir.symbols.SyntheticSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirSyntheticPropertySymbol
 import org.jetbrains.kotlin.name.CallableId
@@ -91,12 +94,44 @@ internal class KaFirSyntheticJavaPropertySymbol(
 
     override fun createPointer(): KaSymbolPointer<KaSyntheticJavaPropertySymbol> = withValidityAssertion {
         KaFirJavaSyntheticPropertySymbolPointer(
-            ownerPointer = createOwnerPointer(),
+            ownerPointer = subclassWithSetter?.createPointer() ?: createOwnerPointer(),
             propertyName = name,
             isSynthetic = firSymbol is SyntheticSymbol,
             originalSymbol = this
         )
     }
+
+    /**
+     * The class of the setter if it's a subclass of the class of the getter, which is the containing declaration. Pointers take it as
+     * the owner, since the scope of the getter's class has another setter or none.
+     *
+     * For example, `foo` has `Derived.setFoo` in the scope of `Derived` and `Base.setFoo` in the scope of `Base`:
+     *
+     * ```java
+     * public class Base {
+     *     public String getFoo() { return ""; }
+     *     public void setFoo(String value) {}
+     * }
+     *
+     * public class Derived extends Base {
+     *     @Override
+     *     public void setFoo(String value) {}
+     * }
+     * ```
+     */
+    private val subclassWithSetter: KaClassSymbol?
+        get() {
+            // A property from the member scope of a Java class is restored from that class, its containing declaration
+            if (firSymbol !is SyntheticSymbol) return null
+
+            val firSession = analysisSession.firSession
+            val getterClass = firSymbol.getterSymbol?.delegateFunctionSymbol?.containingClassLookupTag() ?: return null
+            val setterClass = firSymbol.setterSymbol?.delegateFunctionSymbol?.containingClassLookupTag()?.toClassSymbol(firSession)
+                ?: return null
+
+            if (!setterClass.isSubclassOf(getterClass, firSession, isStrict = true, lookupInterfaces = true)) return null
+            return builder.classifierBuilder.buildClassLikeSymbol(setterClass) as KaClassSymbol
+        }
 
     /**
      * Synthetic properties are built anew on each scope lookup, so two symbols of the same property usually have different
