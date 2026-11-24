@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.fir.declarations.DirectDeclarationsAccess
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.FirFunction
 import org.jetbrains.kotlin.fir.declarations.FirNamedFunction
+import org.jetbrains.kotlin.fir.declarations.FirValueParameter
 import org.jetbrains.kotlin.fir.declarations.FirVariable
 import org.jetbrains.kotlin.fir.declarations.getBooleanArgument
 import org.jetbrains.kotlin.fir.declarations.getCompilerRequiredAnnotationByClassId
@@ -276,6 +277,7 @@ object ConeLombokAnnotations {
             val variables = getVariablesForParameters(classSymbol)
             if (variables.size != function.valueParameters.size) return false
             return variables.zip(function.valueParameters).all { [first, second] ->
+                if (first is FirValueParameter && first.isVararg) return@all false
                 first.returnTypeRef.equalWhenResolved(session, second.returnTypeRef)
             }
         }

@@ -70,11 +70,18 @@ abstract class AbstractConstructorGeneratorPart<T : ConeLombokAnnotations.Constr
         val constructorInfo = getConstructorInfo(classSymbol) ?: return false
         if (constructorInfo.accessLevel.toVisibility(classSymbol) == null) return false
         val staticName = constructorInfo.staticName?.let { Name.identifier(it) } ?: return false
-        // Only regular classes may have static factory constructors (no objects/interfaces/enums/annotations)
-        if (classSymbol.classKind != ClassKind.CLASS) return false
-
-        return classSymbol.supportsGeneratedConstructor && !classSymbol.isInner &&
-                !staticFactoryNameIsTaken(classSymbol, staticName, getVariablesForParameters(classSymbol).size)
+        return when {
+            // Only regular classes may have static factory constructors (no objects/interfaces/enums/annotations)
+            classSymbol.classKind != ClassKind.CLASS -> false
+            !classSymbol.supportsGeneratedConstructor || classSymbol.isInner -> false
+            else -> {
+                val variables = getVariablesForParameters(classSymbol)
+                !staticFactoryNameIsTaken(
+                    classSymbol, staticName,
+                    if (variables.any { it is FirValueParameter && it.isVararg }) 0 else variables.size
+                )
+            }
+        }
     }
 
     /**
@@ -169,6 +176,7 @@ abstract class AbstractConstructorGeneratorPart<T : ConeLombokAnnotations.Constr
 
         val visibility = constructorInfo.accessLevel.toVisibility(classSymbol) ?: return
         val variablesForParameters = getVariablesForParameters(targetClassSymbol)
+        if (variablesForParameters.any { it is FirValueParameter && it.isVararg }) return
         val valuesParameterCount = variablesForParameters.size
         val hasJavaOrigin = classSymbol.hasJavaOrigin
 

@@ -39,7 +39,7 @@ class DataWithNoArgs(val x: Int) {
 }
 
 // A vararg parameter: no factory, no warning expected.
-<!STATIC_CONSTRUCTOR_ALREADY_EXISTS!>@Data(staticConstructor = "of")<!>
+@Data(staticConstructor = "of")
 class DataWithVararg(vararg val items: String) {
     companion object {
         fun of(): DataWithVararg = DataWithVararg()
