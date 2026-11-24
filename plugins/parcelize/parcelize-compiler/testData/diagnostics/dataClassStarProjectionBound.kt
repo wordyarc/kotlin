@@ -1,5 +1,5 @@
 // https://issuetracker.google.com/TODO
-// RUN_PIPELINE_TILL: FRONTEND
+// RUN_PIPELINE_TILL: CODEGEN
 // WITH_STDLIB
 // DIAGNOSTICS: -FINAL_UPPER_BOUND
 @file:OptIn(kotlinx.parcelize.Experimental::class)

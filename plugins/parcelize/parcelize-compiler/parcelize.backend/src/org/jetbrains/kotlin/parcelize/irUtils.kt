@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.parcelize.ParcelizeNames.PARCELABLE_FQN
 import org.jetbrains.kotlin.parcelize.ParcelizeNames.PARCELER_FQN
 import org.jetbrains.kotlin.parcelize.ParcelizeNames.WRITE_TO_PARCEL_NAME
 import org.jetbrains.kotlin.types.Variance
-import org.jetbrains.kotlin.utils.addToStdlib.forEachZipped
 
 private val PARCELIZE_ALLOWED_CLASS_KINDS = listOf(ClassKind.CLASS, ClassKind.OBJECT, ClassKind.ENUM_CLASS)
 
@@ -230,10 +229,31 @@ fun IrTypeArgument.upperBoundOrNull(): IrType? =
 fun IrTypeArgument.upperBound(builtIns: IrBuiltIns): IrType =
     upperBoundOrNull() ?: builtIns.anyNType
 
-fun IrClass.typeParameterMapping(instantiation: IrType): Map<IrTypeParameterSymbol, IrType> = buildMap {
-    (instantiation as? IrSimpleType)?.arguments?.forEachZipped(typeParameters) { arg, parameter ->
-        put(parameter.symbol, arg.upperBoundOrNull() ?: parameter.representativeUpperBound)
+// Maps the type parameters of this class to the types of the values they stand for in [instantiation].
+fun IrClass.typeParameterMapping(instantiation: IrType): Map<IrTypeParameterSymbol, IrType> {
+    val arguments = (instantiation as? IrSimpleType)?.arguments ?: return emptyMap()
+    val mapping = typeParameters.zip(arguments).mapNotNull { [parameter, argument] ->
+        argument.upperBoundOrNull()?.let { parameter.symbol to it }
+    }.toMap(mutableMapOf())
+    val parametersInProgress = mutableSetOf<IrTypeParameterSymbol>()
+
+    // Star projections and in-projections are mapped to the representative upper bound of the type parameter. Since the bound can refer
+    // to other type parameters of this class, which are not in scope where the mapping is used, these are mapped in the bound as well.
+    fun map(parameter: IrTypeParameter): IrType {
+        mapping[parameter.symbol]?.let { return it }
+        val bound = parameter.representativeUpperBound
+        if (!parametersInProgress.add(parameter.symbol)) {
+            // The bound refers to the type parameter itself, e.g., `T : Comparable<T>`.
+            return bound.erasedUpperBound.symbol.starProjectedType.mergeNullability(bound)
+        }
+        val mappedBound = bound.substitute(typeParameters.associate { it.symbol to map(it) })
+        parametersInProgress.remove(parameter.symbol)
+        mapping[parameter.symbol] = mappedBound
+        return mappedBound
     }
+
+    typeParameters.forEach(::map)
+    return mapping
 }
 
 // Returns this type if it is a class type, or the class type which the type parameter is (transitively) bounded by otherwise,
