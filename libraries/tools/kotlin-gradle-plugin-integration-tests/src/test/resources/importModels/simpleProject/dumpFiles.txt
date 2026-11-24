@@ -1,4 +1,0 @@
-base.bin
-base.txt
-projectInformation.bin
-projectInformation.txt

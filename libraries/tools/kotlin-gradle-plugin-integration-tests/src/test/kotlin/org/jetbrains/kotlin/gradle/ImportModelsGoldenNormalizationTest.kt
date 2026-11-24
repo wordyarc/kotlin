@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.importmodels.proto.ProjectModel
 import org.jetbrains.kotlin.importmodels.proto.baseModel
 import org.jetbrains.kotlin.importmodels.proto.compilationUnitId
 import org.jetbrains.kotlin.importmodels.proto.projectModel
+import org.jetbrains.kotlin.testFederation.MustRunOnChangesInGradle
 import org.jetbrains.kotlin.importmodels.proto.error as importModelError
 import org.jetbrains.kotlin.importmodels.proto.result as resultModel
 import kotlin.test.Test
@@ -24,6 +25,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
 @JvmGradlePluginTests
+@MustRunOnChangesInGradle
 class ImportModelsGoldenNormalizationTest : KGPBaseTest() {
     @Test
     fun `replaces the project dir in its printed escaped form`() {
