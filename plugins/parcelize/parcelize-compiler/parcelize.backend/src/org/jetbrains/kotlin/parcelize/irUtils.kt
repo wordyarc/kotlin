@@ -236,6 +236,16 @@ fun IrClass.typeParameterMapping(instantiation: IrType): Map<IrTypeParameterSymb
     }
 }
 
+// Returns this type if it is a class type, or the class type which the type parameter is (transitively) bounded by otherwise,
+// i.e., the type whose classifier is the [erasedUpperBound] of this type.
+fun IrType.upperBoundClassType(): IrSimpleType {
+    var type = this
+    while (true) {
+        val typeParameter = type.classifierOrNull as? IrTypeParameterSymbol ?: return type as IrSimpleType
+        type = typeParameter.owner.representativeUpperBound
+    }
+}
+
 private fun IrClass.getSimpleFunction(name: String): IrSimpleFunctionSymbol? =
     findDeclaration<IrSimpleFunction> { it.name.asString() == name }?.symbol
 

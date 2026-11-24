@@ -341,7 +341,9 @@ class IrParcelSerializerFactory(private val symbols: AndroidSymbols, private val
                 return serializableSerializer
 
             classifier.isData && (inDataClass || irType.hasAnnotation(ParcelizeNames.DATA_CLASS_ANNOTATION_CLASS_ID)) -> {
-                val typeMapping = classifier.typeParameterMapping(irType)
+                // A type parameter is serialized as the data class type it is bounded by.
+                val dataClassType = irType.upperBoundClassType()
+                val typeMapping = classifier.typeParameterMapping(dataClassType)
                 val primaryConstructor = classifier.primaryConstructor
                     ?: throw IllegalArgumentException("Primary constructor of data class '${classifier.name}' is missing")
 
@@ -349,7 +351,7 @@ class IrParcelSerializerFactory(private val symbols: AndroidSymbols, private val
                     val property = classifier.findCorrespondingDataClassProperty(valueParameter)
                     property.symbol to getChild(valueParameter.type.substitute(typeMapping), allowDataClasses = true)
                 }
-                return wrapNullableSerializerIfNeeded(irType, IrDataClassParcelSerializer(irType, members))
+                return wrapNullableSerializerIfNeeded(irType, IrDataClassParcelSerializer(dataClassType, members))
             }
 
             classifier.isSubclassOfFqName("java.io.Serializable") ->
