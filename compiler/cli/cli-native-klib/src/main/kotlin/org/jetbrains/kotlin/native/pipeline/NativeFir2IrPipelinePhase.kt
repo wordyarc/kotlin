@@ -39,6 +39,7 @@ import org.jetbrains.kotlin.name.NativeForwardDeclarationKind
 import org.jetbrains.kotlin.backend.konan.checkers.NativeKlibCheckers
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.languageVersionSettings
+import org.jetbrains.kotlin.fir.processIncrementalCompilationRoundIfNeeded
 import org.jetbrains.kotlin.ir.KtDiagnosticReporterWithImplicitIrBasedContext
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.native.Fir2IrOutput
@@ -138,6 +139,7 @@ object NativePreSerializationPipelinePhase : PipelinePhase<NativeFir2IrArtifact,
 ) {
     override fun executePhase(input: NativeFir2IrArtifact): NativeFir2IrArtifact {
         val (fir2IrOutput, configuration, phaseContext) = input
+        processIncrementalCompilationRoundIfNeeded(configuration, fir2IrOutput.frontendOutput, fir2IrOutput.fir2irActualizedResult)
         val phaseConfig = configuration.phaseConfig ?: PhaseConfig()
         val phaserState = PhaserState()
         val engine = PhaseEngine(phaseConfig, phaserState, phaseContext)
