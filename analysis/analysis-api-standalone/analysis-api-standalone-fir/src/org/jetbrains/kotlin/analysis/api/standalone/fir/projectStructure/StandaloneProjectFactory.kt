@@ -62,7 +62,7 @@ import org.jetbrains.kotlin.analysis.api.standalone.projectStructure.StandaloneL
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
-import org.jetbrains.kotlin.analysis.low.level.api.fir.util.createAnalysisApiConfiguration
+import org.jetbrains.kotlin.analysis.low.level.api.fir.util.createForAnalysisApi
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.jvm.compiler.*
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
@@ -547,6 +547,6 @@ object StandaloneProjectFactory {
 
     @OptIn(LLFirInternals::class)
     private fun createStubConfigurationForReporting(): CompilerConfiguration {
-        return createAnalysisApiConfiguration(BaseDiagnosticsCollector.DoNothing, MessageCollector.NONE)
+        return CompilerConfiguration.createForAnalysisApi(BaseDiagnosticsCollector.DoNothing, MessageCollector.NONE)
     }
 }

@@ -28,10 +28,10 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Lock
 
 @LLFirInternals
-fun createAnalysisApiConfiguration(
+fun CompilerConfiguration.Companion.createForAnalysisApi(
     diagnosticsCollector: BaseDiagnosticsCollector? = null,
     messageCollector: MessageCollector? = null,
-): CompilerConfiguration = CompilerConfiguration.create(diagnosticsCollector, messageCollector, parseTreeKind = PsiParseTreeKind)
+): CompilerConfiguration = create(diagnosticsCollector, messageCollector, parseTreeKind = PsiParseTreeKind)
 
 internal inline fun <T> Lock.lockWithPCECheck(action: () -> T): T {
     while (true) {

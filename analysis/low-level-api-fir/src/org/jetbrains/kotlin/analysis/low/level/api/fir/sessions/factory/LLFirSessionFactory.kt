@@ -39,7 +39,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.symbolProviders.combined.
 import org.jetbrains.kotlin.analysis.low.level.api.fir.symbolProviders.combined.LLCombinedKotlinSymbolProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.symbolProviders.combined.LLCombinedPackageDelegationSymbolProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.symbolProviders.combined.LLCombinedSyntheticFunctionSymbolProvider
-import org.jetbrains.kotlin.analysis.low.level.api.fir.util.createAnalysisApiConfiguration
+import org.jetbrains.kotlin.analysis.low.level.api.fir.util.createForAnalysisApi
 import org.jetbrains.kotlin.assignment.plugin.AssignmentCommandLineProcessor
 import org.jetbrains.kotlin.assignment.plugin.AssignmentConfigurationKeys
 import org.jetbrains.kotlin.assignment.plugin.k2.FirAssignmentPluginExtensionRegistrar
@@ -433,7 +433,7 @@ internal class LLFirSessionFactory(
 
         val compilerArguments = makeScriptCompilerArguments(scriptDefinition.compilerOptions.toList())
         val commandLineProcessors = listOf(AssignmentCommandLineProcessor())
-        val compilerConfiguration = createAnalysisApiConfiguration()
+        val compilerConfiguration = CompilerConfiguration.createForAnalysisApi()
         processCompilerPluginsOptions(
             compilerConfiguration, compilerArguments.pluginOptions.asIterable(), commandLineProcessors
         )
