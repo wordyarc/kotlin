@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.scopes.getDeclaredConstructors
 import org.jetbrains.kotlin.fir.scopes.impl.declaredMemberScope
 import org.jetbrains.kotlin.fir.scopes.processAllProperties
-import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.lombok.LombokFirDiagnostics
@@ -140,7 +139,6 @@ object FirLombokConstructorsChecker : FirRegularClassChecker(MppCheckerKind.Plat
      * Whether the static factory from [constructorAnnotation] is already taken for [declaration], either by the class itself,
      * where it would shadow the factory, or by the companion object the factory is generated into.
      */
-    @OptIn(SymbolInternals::class)
     private fun declaresStaticConstructor(
         session: FirSession,
         declaration: FirRegularClass,
@@ -152,7 +150,7 @@ object FirLombokConstructorsChecker : FirRegularClassChecker(MppCheckerKind.Plat
             container.declaredFunctions(session).any { functionSymbol ->
                 !functionSymbol.origin.isGeneratedConstructor &&
                         !functionSymbol.hasReceiverOrContextParameters &&
-                        constructorAnnotation.matchesGivenFunction(session, declaration.symbol, functionSymbol.fir)
+                        constructorAnnotation.matchesGivenFunction(session, declaration.symbol, functionSymbol)
             }
         }
     }

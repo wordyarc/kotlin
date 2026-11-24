@@ -28,6 +28,15 @@ class NoClashByDifferentArityInClass(val name: String) {
     fun of() {}
 }
 
+// The factory `of(name: String)` is an overload of the declared `of(name: Int)`, so it is generated: no warning is expected.
+// Unlike getter etc., here Lombok does not perform "clash by parameter number" check
+@Data(staticConstructor = "of")
+class NoClashByDifferentTypes(val name: String) {
+    companion object {
+        fun of(name: Int): NoClashByDifferentTypes = of(name.toString())
+    }
+}
+
 // An explicit constructor annotation replaces the one `@Data` implies, `staticConstructor` included,
 // so `of` is never generated and no warning is expected.
 @Data(staticConstructor = "of")
@@ -64,6 +73,8 @@ fun test() {
     NoClashByDifferentArity.of("name")
     NoClashByDifferentArity.of()
     NoClashByDifferentArityInClass.of("name")
+    NoClashByDifferentTypes.of(0)
+    NoClashByDifferentTypes.of("name")
     DataWithNoArgs.of()
     DataWithVararg.of()
     DataObject.of()
