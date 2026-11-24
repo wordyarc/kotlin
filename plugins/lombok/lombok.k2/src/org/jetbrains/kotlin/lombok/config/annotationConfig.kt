@@ -9,6 +9,8 @@ import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.DirectDeclarationsAccess
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
+import org.jetbrains.kotlin.fir.declarations.FirFunction
+import org.jetbrains.kotlin.fir.declarations.FirNamedFunction
 import org.jetbrains.kotlin.fir.declarations.FirVariable
 import org.jetbrains.kotlin.fir.declarations.getBooleanArgument
 import org.jetbrains.kotlin.fir.declarations.getCompilerRequiredAnnotationByClassId
@@ -269,13 +271,17 @@ object ConeLombokAnnotations {
 
         fun getVariablesForParameters(classSymbol: FirClassSymbol<*>): List<FirVariable>
 
-        fun hidesExplicitConstructor(session: FirSession, classSymbol: FirClassSymbol<*>, constructor: FirConstructor): Boolean {
-            if (staticName == null) return false
+        fun matchesGivenFunction(session: FirSession, classSymbol: FirClassSymbol<*>, function: FirFunction): Boolean {
+            if (staticName == null || function is FirNamedFunction && function.name.asString() != staticName) return false
             val variables = getVariablesForParameters(classSymbol)
-            if (variables.size != constructor.valueParameters.size) return false
-            return variables.zip(constructor.valueParameters).all { [first, second] ->
+            if (variables.size != function.valueParameters.size) return false
+            return variables.zip(function.valueParameters).all { [first, second] ->
                 first.returnTypeRef.equalWhenResolved(session, second.returnTypeRef)
             }
+        }
+
+        fun hidesExplicitConstructor(session: FirSession, classSymbol: FirClassSymbol<*>, constructor: FirConstructor): Boolean {
+            return matchesGivenFunction(session, classSymbol, constructor)
         }
 
         fun generatesPlainNoArgsConstructor(classSymbol: FirClassSymbol<*>): Boolean {
