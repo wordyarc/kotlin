@@ -145,7 +145,6 @@ sealed class FirValueClassDeclarationChecker(mppKind: MppCheckerKind) : FirRegul
             reporter.reportOn(
                 declaration.source,
                 FirErrors.VALUE_CLASS_NOT_FINAL,
-                kind.valueModifierPrefix,
             )
         }
 

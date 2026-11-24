@@ -2561,7 +2561,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
 
         // Value classes
         map.put(VALUE_CLASS_NOT_TOP_LEVEL, "Value class cannot be local or inner.")
-        map.put(VALUE_CLASS_NOT_FINAL, "Inline value class can only be final.", STRING)
+        map.put(VALUE_CLASS_NOT_FINAL, "Inline value class can only be final.")
         map.put(VALUE_CLASS_OPEN, "Value class cannot be open.")
         map.put(ABSENCE_OF_PRIMARY_CONSTRUCTOR_FOR_VALUE_CLASS, "Primary constructor is required for {0} classes.", STRING)
         map.put(

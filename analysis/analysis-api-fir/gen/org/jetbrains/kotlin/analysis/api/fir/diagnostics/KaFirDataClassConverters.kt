@@ -3080,7 +3080,6 @@ private fun KaDiagnosticConverterBuilder.addConversions62() {
     }
     add(FirErrors.VALUE_CLASS_NOT_FINAL) { firDiagnostic ->
         ValueClassNotFinalImpl(
-            firDiagnostic.a,
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )

@@ -2886,8 +2886,6 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
     public interface ValueClassNotFinal : KaFirDiagnostic<KtDeclaration> {
         override val diagnosticClass: KClass<ValueClassNotFinal>
             get() = ValueClassNotFinal::class
-
-        public val prefix: String
     }
 
     @KaUnstableDiagnosticApi
