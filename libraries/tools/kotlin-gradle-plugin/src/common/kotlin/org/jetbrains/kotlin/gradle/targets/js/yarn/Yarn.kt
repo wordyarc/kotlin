@@ -8,11 +8,14 @@ package org.jetbrains.kotlin.gradle.targets.js.yarn
 import org.gradle.api.model.ObjectFactory
 import org.gradle.process.ExecOperations
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmApiExecution
+import java.io.File
 
 class Yarn internal constructor(
     execOps: ExecOperations,
     objects: ObjectFactory,
+    mutexFile: File,
 ) : NpmApiExecution<YarnEnvironment> by YarnWorkspaces(
     execOps,
     objects,
+    mutexFile,
 )
