@@ -1,9 +1,9 @@
 /*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.utils
+package org.jetbrains.kotlin.gradle.tasks
 
 /**
  * ID of [ResolvedDependency].
@@ -103,7 +103,7 @@ object ResolvedDependenciesSupport {
                 module.requestedVersionsByIncomingDependencies.entries.joinTo(
                     this,
                     separator = ""
-                ) { [incomingDependencyId, requestedVersion] ->
+                ) { (incomingDependencyId, requestedVersion) ->
                     val incomingDependencyIndex = moduleIdToIndex.getValue(incomingDependencyId)
                     " #$incomingDependencyIndex[$requestedVersion]"
                 }
@@ -175,7 +175,7 @@ object ResolvedDependenciesSupport {
 
         // Stamp incoming dependencies & requested versions.
         modules.forEach { module ->
-            requestedVersionsByIncomingDependenciesIndices[module.id]?.forEach { [incomingDependencyIndex, requestedVersion] ->
+            requestedVersionsByIncomingDependenciesIndices[module.id]?.forEach { (incomingDependencyIndex, requestedVersion) ->
                 val incomingDependencyId = if (incomingDependencyIndex == 0)
                     sourceCodeModuleId!!
                 else

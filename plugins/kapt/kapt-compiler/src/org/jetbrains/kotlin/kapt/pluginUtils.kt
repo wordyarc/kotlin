@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.kotlin.utils
+package org.jetbrains.kotlin.kapt
 
 import java.io.ByteArrayInputStream
 import java.io.ObjectInputStream
