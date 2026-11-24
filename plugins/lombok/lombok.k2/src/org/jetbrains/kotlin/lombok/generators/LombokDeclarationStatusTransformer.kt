@@ -78,13 +78,11 @@ class LombokDeclarationStatusTransformer(session: FirSession) : FirStatusTransfo
         containingClass: FirClassLikeSymbol<*>?,
         isLocal: Boolean,
     ): FirDeclarationStatus {
-        if (containingClass == null) return status
+        if (containingClass !is FirClassSymbol) return status
 
         val isHidden = if (constructor is FirJavaConstructor) {
             when {
-                // Only hide synthetic constructors (default no-args from Java analysis), not user-declared ones.
-                constructor.source?.kind !is KtFakeSourceElementKind.ImplicitConstructor -> false
-                containingClass.hasConstructorHiddenByStaticFactory() -> true
+                containingClass.hasConstructorHiddenByStaticFactory(constructor) -> true
                 constructor.valueParameters.isEmpty() -> containingClass.hasDefaultConstructorHiddenByConstructorWithArgs()
                 else -> false
             }
@@ -92,8 +90,7 @@ class LombokDeclarationStatusTransformer(session: FirSession) : FirStatusTransfo
             // The static factory of a Kotlin class delegates to its primary constructor, which it then stands in for,
             // as the constructor generated for a Java class does. Only once it is actually generated, though, or the
             // class could not be constructed at all.
-            constructor.isPrimary && containingClass is FirClassSymbol<*> &&
-                    requiredArgsConstructorPart.generatesStaticFactory(containingClass)
+            constructor.isPrimary && requiredArgsConstructorPart.generatesStaticFactory(containingClass)
         }
 
         return if (isHidden) {
@@ -103,13 +100,14 @@ class LombokDeclarationStatusTransformer(session: FirSession) : FirStatusTransfo
         }
     }
 
-    private fun FirClassLikeSymbol<*>.hasConstructorHiddenByStaticFactory(): Boolean {
-        val lombokService = session.lombokService
-        return lombokService.getRequiredArgsConstructor(this)?.staticName != null ||
-                lombokService.getAllArgsConstructor(this)?.staticName != null ||
-                lombokService.getNoArgsConstructor(this)?.staticName != null ||
-                lombokService.getData(this)?.staticConstructor != null ||
-                lombokService.getValue(this)?.staticConstructor != null
+    private fun FirClassSymbol<*>.hasConstructorHiddenByStaticFactory(constructor: FirConstructor): Boolean {
+        session.lombokService.let {
+            return it.getRequiredArgsConstructor(this)?.hidesExplicitConstructor(session, this, constructor) == true ||
+                    it.getAllArgsConstructor(this)?.hidesExplicitConstructor(session, this, constructor) == true ||
+                    it.getNoArgsConstructor(this)?.hidesExplicitConstructor(session, this, constructor) == true ||
+                    it.getData(this)?.asRequiredArgsConstructor(this)?.hidesExplicitConstructor(session, this, constructor) == true ||
+                    it.getValue(this)?.asAllArgsConstructor(this)?.hidesExplicitConstructor(session, this, constructor) == true
+        }
     }
 
     private fun FirClassLikeSymbol<*>.hasDefaultConstructorHiddenByConstructorWithArgs(): Boolean {
