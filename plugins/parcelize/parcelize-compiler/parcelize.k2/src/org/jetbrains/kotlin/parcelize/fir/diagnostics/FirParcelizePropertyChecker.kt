@@ -142,6 +142,8 @@ object FirParcelizePropertyChecker : FirPropertyChecker(MppCheckerKind.Platform)
         val inDataClass: Boolean = false,
         val fromDataClassProperty: Boolean = false,
         val inRawValue: Boolean = false,
+        // The data class types which are being serialized property by property in the current path.
+        val expandedDataClassTypes: Set<ConeKotlinType> = emptySet(),
     )
 
     private class UnsubstitutedTypeWithOrigin(val type: ConeKotlinType, val origin: DataClassExpansion?) {
@@ -224,6 +226,14 @@ object FirParcelizePropertyChecker : FirPropertyChecker(MppCheckerKind.Platform)
                 return setOf(UnsupportedType(recursiveDataClass.type, UnsupportedType.Reason.RECURSIVE_DATA_CLASS))
             }
 
+            // A data class can also occur again through the upper bound of a type parameter, which is not written in the declaration of
+            // a data class. Example: `X` in `class P<X : Box<X>>(val x: @DataClass X)`. Serializing the same type again in the same path
+            // would repeat indefinitely.
+            val dataClassType = upperBound.withNullability(nullable = false, session.typeContext).withAttributes(ConeAttributes.Empty)
+            if (dataClassType in state.expandedDataClassTypes) {
+                return setOf(UnsupportedType(dataClassType, UnsupportedType.Reason.RECURSIVE_DATA_CLASS))
+            }
+
             val properties = symbol.dataClassPrimaryConstructorPropertiesOrNull(session)
                 ?: return setOf(UnsupportedType(type, UnsupportedType.Reason.INACCESSIBLE_DATA_CLASS))
 
@@ -241,7 +251,7 @@ object FirParcelizePropertyChecker : FirPropertyChecker(MppCheckerKind.Platform)
             val substitutor = substitutorByMap(typeMapping, context.session)
             val unsubstitutedTypeArguments = unsubstitutedType.type.getErasedUpperBound(session)?.typeArguments.orEmpty()
             val expansion = DataClassExpansion(
-                type = upperBound.withNullability(nullable = false, session.typeContext).withAttributes(ConeAttributes.Empty),
+                type = dataClassType,
                 origin = unsubstitutedType.origin,
                 typeArguments = symbol.typeParameterSymbols.zip(unsubstitutedTypeArguments).mapNotNull { [parameter, arg] ->
                     arg.serializedTypeOrNull()?.let { parameter to UnsubstitutedTypeWithOrigin(it, unsubstitutedType.origin).resolve() }
@@ -255,6 +265,7 @@ object FirParcelizePropertyChecker : FirPropertyChecker(MppCheckerKind.Platform)
                         inDataClass = true,
                         fromDataClassProperty = true,
                         unsubstitutedType = UnsubstitutedTypeWithOrigin(property.resolvedReturnType, expansion).resolve(),
+                        expandedDataClassTypes = state.expandedDataClassTypes + dataClassType,
                     ),
                 )
             }

@@ -1,0 +1,7 @@
+/dataClassFBounded.kt:14:28: error: Recursive data class 'Box<X (of class P<X : Box<X>>)>' is not supported by 'Parcelize'. Make the data class 'Parcelable' or add the '@TypeParceler<Box<X (of class P<X : Box<X>>)>, ...>' annotation to provide the serialization logic.
+
+/dataClassFBounded.kt:21:12: error: Recursive data class 'Box<T (of class A<T : Box<T>>)>' is not supported by 'Parcelize'. Make the data class 'Parcelable' or add the '@TypeParceler<Box<T (of class A<T : Box<T>>)>, ...>' annotation to provide the serialization logic.
+
+/dataClassFBounded.kt:22:12: error: Recursive data class 'ListBox<Y (of class Q<Y : ListBox<Y>, Z : List<Box<Z>>>)>' is not supported by 'Parcelize'. Make the data class 'Parcelable' or add the '@TypeParceler<ListBox<Y (of class Q<Y : ListBox<Y>, Z : List<Box<Z>>>)>, ...>' annotation to provide the serialization logic.
+
+/dataClassFBounded.kt:23:12: error: Recursive data class 'Box<Z (of class Q<Y : ListBox<Y>, Z : List<Box<Z>>>)>' is not supported by 'Parcelize'. Make the data class 'Parcelable' or add the '@TypeParceler<Box<Z (of class Q<Y : ListBox<Y>, Z : List<Box<Z>>>)>, ...>' annotation to provide the serialization logic.
