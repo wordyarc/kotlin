@@ -255,7 +255,6 @@ abstract class AbstractConstructorGeneratorPart<T : ConeLombokAnnotations.Constr
                 }
             }
         } else {
-            if (checkClashing<FirNamedFunction>(valuesParameterCount)) return
             if (staticFactoryNameIsTaken(targetClassSymbol)) return
 
             val methodSymbol = FirNamedFunctionSymbol(CallableId(classSymbol.classId, staticName))
