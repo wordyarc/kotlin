@@ -1,7 +1,6 @@
 // https://issuetracker.google.com/TODO
-// RUN_PIPELINE_TILL: FRONTEND
+// RUN_PIPELINE_TILL: CODEGEN
 // WITH_STDLIB
-// MUTE_LL_FIR: The Analysis API test analyzes `lib` from sources, where `@DataClass` is not lost, https://issuetracker.google.com/TODO
 
 // MODULE: lib
 // FILE: lib.kt
@@ -19,4 +18,4 @@ import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
-class P(val c: <!PARCELABLE_TYPE_NOT_SUPPORTED!>DataColor<!>) : Parcelable
+class P(val c: DataColor) : Parcelable
