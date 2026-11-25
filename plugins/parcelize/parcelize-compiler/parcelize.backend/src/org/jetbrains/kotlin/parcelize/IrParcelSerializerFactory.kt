@@ -72,8 +72,12 @@ class IrParcelSerializerFactory(private val symbols: AndroidSymbols, private val
     ): IrParcelSerializer {
         fun strict() = strict && !irType.hasAnyAnnotation(RAW_VALUE_ANNOTATION_FQ_NAMES)
 
-        fun getChild(elementType: IrType, allowDataClasses: Boolean = false) =
-            get(elementType, scope, parcelizeType, strict(), inDataClass = inDataClass || allowDataClasses)
+        // `@DataClass` applies to the data classes contained in the annotated type, i.e., its properties if it is a data class,
+        // or its elements if it is a container.
+        val childrenInDataClass = inDataClass || irType.hasAnnotation(ParcelizeNames.DATA_CLASS_ANNOTATION_CLASS_ID)
+
+        fun getChild(elementType: IrType) =
+            get(elementType, scope, parcelizeType, strict(), inDataClass = childrenInDataClass)
 
         scope.getCustomSerializer(irType)?.let { return it }
 
@@ -340,7 +344,7 @@ class IrParcelSerializerFactory(private val symbols: AndroidSymbols, private val
             irType.isFunctionTypeOrSubtype() || irType.isSuspendFunctionTypeOrSubtype() ->
                 return serializableSerializer
 
-            classifier.isData && (inDataClass || irType.hasAnnotation(ParcelizeNames.DATA_CLASS_ANNOTATION_CLASS_ID)) -> {
+            classifier.isData && childrenInDataClass -> {
                 // A type parameter is serialized as the data class type it is bounded by.
                 val dataClassType = irType.upperBoundClassType()
                 val typeMapping = classifier.typeParameterMapping(dataClassType)
@@ -349,7 +353,7 @@ class IrParcelSerializerFactory(private val symbols: AndroidSymbols, private val
 
                 val members = primaryConstructor.parameters.map { valueParameter ->
                     val property = classifier.findCorrespondingDataClassProperty(valueParameter)
-                    property.symbol to getChild(valueParameter.type.substitute(typeMapping), allowDataClasses = true)
+                    property.symbol to getChild(valueParameter.type.substitute(typeMapping))
                 }
                 return wrapNullableSerializerIfNeeded(irType, IrDataClassParcelSerializer(dataClassType, members))
             }

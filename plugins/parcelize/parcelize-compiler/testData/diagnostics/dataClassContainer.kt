@@ -1,5 +1,5 @@
 // https://issuetracker.google.com/TODO
-// RUN_PIPELINE_TILL: FRONTEND
+// RUN_PIPELINE_TILL: CODEGEN
 // WITH_STDLIB
 @file:OptIn(kotlinx.parcelize.Experimental::class)
 
@@ -10,4 +10,4 @@ import kotlinx.parcelize.Parcelize
 data class Color(val r: Int)
 
 @Parcelize
-class P(val colors: <!PARCELABLE_TYPE_CONTAINS_NOT_SUPPORTED!>@DataClass List<Color><!>) : Parcelable
+class P(val colors: @DataClass List<Color>) : Parcelable

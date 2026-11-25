@@ -201,13 +201,15 @@ object FirParcelizePropertyChecker : FirPropertyChecker(MppCheckerKind.Platform)
         }
 
         if (fqName in BuiltinParcelableTypes.PARCELABLE_CONTAINER_FQNAMES) {
+            // `@DataClass` on a container applies to the data classes it contains.
+            val elementState = if (type.hasDataClassAnnotation(session)) state.copy(inDataClass = true) else state
             val unsubstitutedTypeArguments = unsubstitutedType.type.getErasedUpperBound(session)?.typeArguments
             return upperBound.typeArguments.foldIndexed(emptySet()) { index, acc, arg ->
                 val elementType = arg.type ?: StandardTypes.NullableAny
                 val unsubstitutedElementType = unsubstitutedTypeArguments?.getOrNull(index)?.type
                     ?.let { UnsubstitutedTypeWithOrigin(it, unsubstitutedType.origin).resolve() }
                     ?: UnsubstitutedTypeWithOrigin(elementType, unsubstitutedType.origin)
-                acc union checkParcelableType(elementType, state.copy(unsubstitutedType = unsubstitutedElementType))
+                acc union checkParcelableType(elementType, elementState.copy(unsubstitutedType = unsubstitutedElementType))
             }
         }
 
@@ -215,7 +217,7 @@ object FirParcelizePropertyChecker : FirPropertyChecker(MppCheckerKind.Platform)
             return emptySet()
         }
 
-        if (symbol.isData && (inDataClass || type.customAnnotations.any { it.fqName(session) == ParcelizeNames.DATA_CLASS_ANNOTATION_FQ_NAME })) {
+        if (symbol.isData && (inDataClass || type.hasDataClassAnnotation(session))) {
             // A data class which is written in its own declaration, possibly through the declarations of other data classes,
             // is recursive and cannot be serialized inline: its serializer would unfold the same declarations indefinitely.
             // Example: `data class Node(val next: Node?)` or `data class Node<T>(val next: Node<List<T>>?)`.
@@ -339,6 +341,9 @@ object FirParcelizePropertyChecker : FirPropertyChecker(MppCheckerKind.Platform)
 
     private fun ConeKotlinType.hasAnyAnnotation(fqNames: List<FqName>, session: FirSession): Boolean =
         customAnnotations.any { it.fqName(session) in fqNames }
+
+    private fun ConeKotlinType.hasDataClassAnnotation(session: FirSession): Boolean =
+        customAnnotations.any { it.fqName(session) == ParcelizeNames.DATA_CLASS_ANNOTATION_FQ_NAME }
 
     private fun FirProperty.hasIgnoredOnParcel(session: FirSession): Boolean {
         return annotations.hasIgnoredOnParcel(session) || (getter?.annotations?.hasIgnoredOnParcel(session) ?: false)
