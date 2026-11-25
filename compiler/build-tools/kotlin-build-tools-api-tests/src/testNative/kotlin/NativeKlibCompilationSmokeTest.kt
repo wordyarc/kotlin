@@ -23,7 +23,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
 @MustRunAlways
-@Disabled("KT-91839")
 @DisplayName("Smoke tests for Kotlin/Native klib compilation")
 class NativeKlibCompilationSmokeTest : BaseCompilationTest() {
     @Test
